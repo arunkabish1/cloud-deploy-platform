@@ -35,7 +35,7 @@ export async function createRealGitHubRepo(
   if (!config.githubToken) {
     return {
       success: false,
-      message: 'GitHub Personal Access Token not set. Please add token in Settings.',
+      message: 'GitHub Personal Access Token not set. Please add token in Cloud Credentials.',
     };
   }
 
@@ -79,7 +79,7 @@ export async function createRealGitHubRepo(
   }
 }
 
-// 2. Create Real Cloudflare Pages Project via Cloudflare Pages Function Proxy (/api/cloudflare)
+// 2. Create Real Cloudflare Pages Project via Serverless Edge Function (/api/cloudflare)
 export async function createRealCloudflarePages(
   projectName: string,
   config: RealApiConfig
@@ -87,15 +87,15 @@ export async function createRealCloudflarePages(
   if (!config.cloudflareToken) {
     return {
       success: false,
-      message: 'Cloudflare API Token not set. Please add API Token in Settings.',
+      message: 'Cloudflare API Token not set. Please add API Token in Cloud Credentials.',
     };
   }
 
   const sanitizedName = projectName.toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+  const endpoint = `${window.location.origin}/api/cloudflare`;
 
   try {
-    // Call serverless proxy endpoint to prevent CORS browser block
-    const response = await fetch('/api/cloudflare', {
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -117,21 +117,21 @@ export async function createRealCloudflarePages(
         details: data,
       };
     } else {
-      const errMsg = data.errors ? data.errors.map((e: any) => e.message).join(', ') : 'Failed to create Pages project';
+      const errMsg = data.errors ? data.errors.map((e: any) => e.message).join(', ') : (data.error || 'Failed to create Pages project');
       return {
         success: false,
-        message: `Cloudflare API Error: ${errMsg}`,
+        message: `Cloudflare API Response: ${errMsg}`,
       };
     }
   } catch (err: any) {
     return {
       success: false,
-      message: `Cloudflare Proxy Error: ${err.message}`,
+      message: `Cloudflare Edge Proxy Error: ${err.message}`,
     };
   }
 }
 
-// 3. Create Real Cloudflare D1 Database via Cloudflare Pages Function Proxy (/api/cloudflare)
+// 3. Create Real Cloudflare D1 Database via Serverless Edge Function (/api/cloudflare)
 export async function createRealCloudflareD1(
   dbName: string,
   config: RealApiConfig
@@ -140,8 +140,10 @@ export async function createRealCloudflareD1(
     return { success: false, message: 'Cloudflare API Token not set.' };
   }
 
+  const endpoint = `${window.location.origin}/api/cloudflare`;
+
   try {
-    const response = await fetch('/api/cloudflare', {
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
