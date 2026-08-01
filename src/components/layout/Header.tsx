@@ -8,7 +8,8 @@ import {
   ShieldCheck, 
   Bell, 
   ExternalLink,
-  Activity
+  Activity,
+  Key
 } from 'lucide-react';
 
 interface HeaderProps {
