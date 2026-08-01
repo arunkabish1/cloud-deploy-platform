@@ -9,22 +9,22 @@ import {
   Terminal, 
   Network, 
   ShieldCheck, 
-  Database, 
-  HardDrive, 
   Zap, 
   Layers, 
   TrendingUp, 
   Activity,
   ArrowUpRight,
   Clock,
-  Trash2
+  PlusCircle,
+  FolderPlus
 } from 'lucide-react';
 
 interface ProjectOverviewProps {
-  project: Project;
+  project?: Project | null;
   recentDeployments: Deployment[];
   onTriggerDeploy: () => void;
   onNavigateTab: (tab: string) => void;
+  onCreateProject: () => void;
 }
 
 export const ProjectOverview: React.FC<ProjectOverviewProps> = ({
@@ -32,7 +32,35 @@ export const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   recentDeployments,
   onTriggerDeploy,
   onNavigateTab,
+  onCreateProject,
 }) => {
+  if (!project) {
+    return (
+      <div className="glass-panel p-12 rounded-3xl text-center space-y-6 max-w-2xl mx-auto my-12">
+        <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center mx-auto shadow-2xl shadow-orange-500/30">
+          <FolderPlus className="w-10 h-10 text-white stroke-[2]" />
+        </div>
+
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold text-slate-100">No Projects Deployed Yet</h1>
+          <p className="text-sm text-slate-400 max-w-md mx-auto">
+            Get started by creating your first cloud application using the Cloudflare + Next.js + Tailwind blueprint or Hono Edge API.
+          </p>
+        </div>
+
+        <div className="pt-4">
+          <button
+            onClick={onCreateProject}
+            className="flex items-center space-x-2 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 hover:from-orange-600 hover:to-amber-600 text-white text-xs font-bold shadow-xl shadow-orange-500/30 transition-all transform active:scale-95 mx-auto"
+          >
+            <PlusCircle className="w-5 h-5 stroke-[2.5]" />
+            <span>Create Your First Project</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Top Banner Card */}
@@ -121,11 +149,8 @@ export const ProjectOverview: React.FC<ProjectOverviewProps> = ({
             <span>Total Requests (24h)</span>
             <Activity className="w-4 h-4 text-orange-400" />
           </div>
-          <div className="text-xl font-bold text-slate-100 font-mono">1,482,910</div>
-          <div className="flex items-center space-x-1 text-[11px] text-emerald-400 font-medium">
-            <TrendingUp className="w-3.5 h-3.5" />
-            <span>+14.2% vs yesterday</span>
-          </div>
+          <div className="text-xl font-bold text-slate-100 font-mono">0</div>
+          <div className="text-[11px] text-slate-400">Active monitoring</div>
         </div>
 
         <div className="glass-card p-4 rounded-xl space-y-2">
@@ -133,7 +158,7 @@ export const ProjectOverview: React.FC<ProjectOverviewProps> = ({
             <span>Avg Edge Latency</span>
             <Clock className="w-4 h-4 text-emerald-400" />
           </div>
-          <div className="text-xl font-bold text-slate-100 font-mono">18.4 ms</div>
+          <div className="text-xl font-bold text-slate-100 font-mono">14.2 ms</div>
           <div className="text-[11px] text-slate-400">Global Cloudflare PoPs</div>
         </div>
 
@@ -142,8 +167,8 @@ export const ProjectOverview: React.FC<ProjectOverviewProps> = ({
             <span>Bandwidth Served</span>
             <ArrowUpRight className="w-4 h-4 text-blue-400" />
           </div>
-          <div className="text-xl font-bold text-slate-100 font-mono">42.8 GB</div>
-          <div className="text-[11px] text-slate-400">Edge Cache Hit Rate: 98.4%</div>
+          <div className="text-xl font-bold text-slate-100 font-mono">0.0 MB</div>
+          <div className="text-[11px] text-slate-400">Edge Cache Hit Rate: 100%</div>
         </div>
 
         <div className="glass-card p-4 rounded-xl space-y-2">
@@ -151,12 +176,12 @@ export const ProjectOverview: React.FC<ProjectOverviewProps> = ({
             <span>Error Rate (5xx)</span>
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
           </div>
-          <div className="text-xl font-bold text-emerald-400 font-mono">0.002%</div>
+          <div className="text-xl font-bold text-emerald-400 font-mono">0.00%</div>
           <div className="text-[11px] text-slate-400">Health checks passing</div>
         </div>
       </div>
 
-      {/* Infrastructure Components Grid (Cloudflare Pages, Workers, D1, R2, KV) */}
+      {/* Infrastructure Components Grid */}
       <div className="glass-panel p-6 rounded-2xl space-y-4">
         <div className="flex items-center justify-between">
           <div>
@@ -201,59 +226,6 @@ export const ProjectOverview: React.FC<ProjectOverviewProps> = ({
                   ))}
                 </div>
               )}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Recent Deployments List */}
-      <div className="glass-panel p-6 rounded-2xl space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-semibold text-slate-100 flex items-center space-x-2">
-              <Clock className="w-4 h-4 text-orange-400" />
-              <span>Recent Deployments</span>
-            </h2>
-            <p className="text-xs text-slate-400">Automated builds & OpenTofu executions</p>
-          </div>
-          <button
-            onClick={() => onNavigateTab('deployments')}
-            className="text-xs text-orange-400 hover:text-orange-300 font-medium flex items-center space-x-1"
-          >
-            <span>View All Deployments</span>
-            <ArrowUpRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        <div className="space-y-3">
-          {recentDeployments.map(dep => (
-            <div
-              key={dep.id}
-              onClick={() => onNavigateTab('deployments')}
-              className="glass-card p-4 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer hover:bg-slate-800/40 transition-all border border-slate-800/80"
-            >
-              <div className="flex items-center space-x-4">
-                <img
-                  src={dep.avatarUrl}
-                  alt={dep.author}
-                  className="w-9 h-9 rounded-full border border-slate-700 object-cover"
-                />
-                <div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xs font-bold text-slate-200">#{dep.deploymentNumber}</span>
-                    <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px] font-mono font-semibold">
-                      {dep.status}
-                    </span>
-                    <span className="text-xs font-mono text-slate-400">{dep.commitHash}</span>
-                  </div>
-                  <p className="text-xs text-slate-300 font-medium mt-0.5">{dep.commitMessage}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-6 text-xs text-slate-400 font-mono">
-                <div>Duration: {dep.durationMs ? `${(dep.durationMs / 1000).toFixed(1)}s` : '14.2s'}</div>
-                <div>{new Date(dep.startedAt).toLocaleTimeString()}</div>
-              </div>
             </div>
           ))}
         </div>

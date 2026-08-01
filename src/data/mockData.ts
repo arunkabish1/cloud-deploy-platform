@@ -1,4 +1,4 @@
-import { ProjectTemplate, Project, Deployment, CloudProviderConnection, LogEntry, EnvVariable, CustomDomain } from '../types';
+import { ProjectTemplate, Project, Deployment, CloudProviderConnection, EnvVariable, CustomDomain } from '../types';
 
 export const INITIAL_TEMPLATES: ProjectTemplate[] = [
   {
@@ -130,199 +130,16 @@ export const INITIAL_PROVIDERS: CloudProviderConnection[] = [
     name: 'Cloudflare Account (arunkabish1)',
     status: 'connected',
     accountId: '39cd6e21a6317ad90e471a9b70a463af',
-    zonesCount: 4,
-    resourcesCount: 12,
-    connectedAt: '2026-06-15T10:00:00Z',
-  },
-  {
-    id: 'prov-aws-1',
-    type: 'aws',
-    name: 'AWS Production OIDC Role',
-    status: 'connected',
-    accountId: '984028471924 (us-east-1)',
-    resourcesCount: 5,
-    connectedAt: '2026-07-01T14:30:00Z',
+    zonesCount: 0,
+    resourcesCount: 0,
+    connectedAt: new Date().toISOString(),
   },
 ];
 
-export const INITIAL_PROJECTS: Project[] = [
-  {
-    id: 'proj-nexus-app',
-    name: 'nexus-storefront',
-    slug: 'nexus-storefront',
-    organization: 'arunkabish1',
-    templateId: 'cloudflare-nextjs-tailwind',
-    repoUrl: 'github.com/arunkabish1/nexus-storefront',
-    branch: 'main',
-    status: 'healthy',
-    environment: 'production',
-    liveUrl: 'https://nexus-storefront.pages.dev',
-    primaryProvider: 'cloudflare',
-    createdAt: '2026-07-20T11:15:00Z',
-    updatedAt: '2026-08-01T12:00:00Z',
-    resources: [
-      {
-        id: 'res-1',
-        category: 'frontend',
-        provider: 'cloudflare',
-        serviceName: 'Cloudflare Pages',
-        type: 'Web Application Engine',
-        status: 'active',
-        details: { Domain: 'nexus-storefront.pages.dev', AccountID: '39cd6e21a6317ad90e471a9b70a463af' },
-      },
-      {
-        id: 'res-2',
-        category: 'backend',
-        provider: 'cloudflare',
-        serviceName: 'Cloudflare Workers',
-        type: 'Edge Middleware & API',
-        status: 'active',
-        details: { Runtime: 'workerd', Routes: '/api/*' },
-      },
-      {
-        id: 'res-3',
-        category: 'database',
-        provider: 'cloudflare',
-        serviceName: 'Cloudflare D1',
-        type: 'Relational Edge Database',
-        status: 'active',
-        details: { DatabaseName: 'nexus_prod_db', Size: '14.2 MB' },
-      },
-      {
-        id: 'res-4',
-        category: 'storage',
-        provider: 'cloudflare',
-        serviceName: 'Cloudflare R2',
-        type: 'S3-Compatible Bucket',
-        status: 'active',
-        details: { BucketName: 'nexus-product-assets', Region: 'auto' },
-      },
-      {
-        id: 'res-5',
-        category: 'cache',
-        provider: 'cloudflare',
-        serviceName: 'Cloudflare KV',
-        type: 'Global Key-Value Cache',
-        status: 'active',
-        details: { Namespace: 'SESSION_CACHE' },
-      },
-    ],
-  },
-  {
-    id: 'proj-auth-edge',
-    name: 'auth-edge-api',
-    slug: 'auth-edge-api',
-    organization: 'arunkabish1',
-    templateId: 'hono-worker-api',
-    repoUrl: 'github.com/arunkabish1/auth-edge-api',
-    branch: 'main',
-    status: 'healthy',
-    environment: 'production',
-    liveUrl: 'https://auth-api.arunkabish1.workers.dev',
-    primaryProvider: 'cloudflare',
-    createdAt: '2026-07-22T09:30:00Z',
-    updatedAt: '2026-07-30T16:45:00Z',
-    resources: [
-      {
-        id: 'res-6',
-        category: 'backend',
-        provider: 'cloudflare',
-        serviceName: 'Cloudflare Workers',
-        type: 'Serverless Worker',
-        status: 'active',
-        details: { Name: 'auth-edge-worker', AccountID: '39cd6e21a6317ad90e471a9b70a463af' },
-      },
-      {
-        id: 'res-7',
-        category: 'database',
-        provider: 'cloudflare',
-        serviceName: 'Cloudflare D1',
-        type: 'User Auth Database',
-        status: 'active',
-        details: { DatabaseName: 'users_auth_db' },
-      },
-    ],
-  },
-];
+export const INITIAL_PROJECTS: Project[] = [];
 
-export const INITIAL_DEPLOYMENTS: Deployment[] = [
-  {
-    id: 'dep-9021',
-    projectId: 'proj-nexus-app',
-    projectName: 'nexus-storefront',
-    deploymentNumber: 42,
-    commitHash: '7f3a9e2',
-    commitMessage: 'feat(ui): update catalog filters and Tailwind theme tokens',
-    author: 'Arun Dev',
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-    status: 'SUCCESS',
-    startedAt: '2026-08-01T12:00:00Z',
-    durationMs: 24500,
-    currentStep: 'Completed',
-    steps: [
-      { id: '1', name: 'Create GitHub Repository & Push Template', status: 'completed' },
-      { id: '2', name: 'Generate OpenTofu HCL Blueprint', status: 'completed' },
-      { id: '3', name: 'Provision Infrastructure (Cloudflare Pages, D1, R2)', status: 'completed' },
-      { id: '4', name: 'Sync Encrypted Environment Secrets', status: 'completed' },
-      { id: '5', name: 'Build Next.js Bundle & Deploy to Edge', status: 'completed' },
-      { id: '6', name: 'Global Health Check & Edge DNS Purge', status: 'completed' },
-    ],
-    logs: [
-      { id: 'l1', timestamp: '12:00:01.002', level: 'INFO', service: 'GitHub App', message: 'Triggered pipeline for commit 7f3a9e2 on branch main' },
-      { id: 'l2', timestamp: '12:00:02.150', level: 'INFO', service: 'OpenTofu Engine', message: 'Initializing OpenTofu v1.6.2 runner engine...' },
-      { id: 'l3', timestamp: '12:00:04.880', level: 'INFO', service: 'OpenTofu Engine', message: 'Plan: 4 to add, 0 to change, 0 to destroy.' },
-      { id: 'l4', timestamp: '12:00:12.300', level: 'INFO', service: 'Cloudflare Pages', message: 'Uploading 142 build artifacts to Cloudflare Pages CDN...' },
-      { id: 'l5', timestamp: '12:00:18.910', level: 'INFO', service: 'Cloudflare D1', message: 'Executed database migrations on D1 instance nexus_prod_db' },
-      { id: 'l6', timestamp: '12:00:24.500', level: 'INFO', service: 'Health Check', message: 'HTTP 200 OK returned from https://nexus-storefront.pages.dev' },
-    ],
-  },
-];
+export const INITIAL_DEPLOYMENTS: Deployment[] = [];
 
-export const INITIAL_ENV_VARS: EnvVariable[] = [
-  {
-    id: 'env-1',
-    key: 'NEXT_PUBLIC_API_URL',
-    value: 'https://auth-api.acme-cloud.workers.dev',
-    environments: ['development', 'preview', 'production'],
-    isSecret: false,
-    updatedAt: '2026-07-28T10:00:00Z',
-  },
-  {
-    id: 'env-2',
-    key: 'DATABASE_URL',
-    value: 'd1://nexus_prod_db?binding=DB',
-    environments: ['production'],
-    isSecret: true,
-    updatedAt: '2026-07-28T10:05:00Z',
-  },
-  {
-    id: 'env-3',
-    key: 'CLOUDFLARE_R2_BUCKET',
-    value: 'nexus-product-assets',
-    environments: ['production', 'preview'],
-    isSecret: false,
-    updatedAt: '2026-07-29T14:20:00Z',
-  },
-  {
-    id: 'env-4',
-    key: 'JWT_SECRET_KEY',
-    value: 'mock_jwt_secret_token_key_994827401928',
-    environments: ['production'],
-    isSecret: true,
-    updatedAt: '2026-07-30T09:12:00Z',
-  },
-];
+export const INITIAL_ENV_VARS: EnvVariable[] = [];
 
-export const INITIAL_DOMAINS: CustomDomain[] = [
-  {
-    id: 'dom-1',
-    domain: 'store.acmecloud.io',
-    status: 'verified',
-    sslStatus: 'active',
-    dnsRecords: [
-      { type: 'CNAME', name: 'store', value: 'nexus-storefront.pages.dev', status: 'active' },
-      { type: 'TXT', name: '_cf-custom-hostname', value: 'cf-verify-8f921a99d4e', status: 'active' },
-    ],
-    createdAt: '2026-07-25T11:00:00Z',
-  },
-];
+export const INITIAL_DOMAINS: CustomDomain[] = [];
