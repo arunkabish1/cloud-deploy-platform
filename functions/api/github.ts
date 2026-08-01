@@ -1,5 +1,4 @@
 export async function onRequest(context: any) {
-  // Handle CORS preflight options
   if (context.request.method === 'OPTIONS') {
     return new Response(null, {
       headers: {
@@ -18,12 +17,16 @@ export async function onRequest(context: any) {
     const body = await context.request.json();
     const { action, repoName, githubToken, githubOwner } = body;
 
-    const token = githubToken || context.env.GITHUB_TOKEN;
+    // Use server-side secret if available, fallback to client-passed token
+    const token = context.env.GITHUB_TOKEN || githubToken;
     const owner = githubOwner || 'arunkabish1';
 
     if (!token) {
       return new Response(
-        JSON.stringify({ success: false, message: 'GitHub Token missing' }),
+        JSON.stringify({ 
+          success: false, 
+          message: 'GitHub Token missing. Please add GITHUB_TOKEN in Cloudflare Pages Environment Secrets or in the app Settings.' 
+        }),
         { status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       );
     }

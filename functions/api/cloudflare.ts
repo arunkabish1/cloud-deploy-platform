@@ -1,5 +1,4 @@
 export async function onRequest(context: any) {
-  // Handle CORS preflight options
   if (context.request.method === 'OPTIONS') {
     return new Response(null, {
       headers: {
@@ -19,11 +18,15 @@ export async function onRequest(context: any) {
     const { action, projectName, cfToken, accountId, dbName } = body;
 
     const targetAccountId = accountId || '39cd6e21a6317ad90e471a9b70a463af';
-    const token = cfToken || context.env.CLOUDFLARE_API_TOKEN;
+    // Use server-side secret if available, fallback to client-passed token
+    const token = context.env.CLOUDFLARE_API_TOKEN || cfToken;
 
     if (!token) {
       return new Response(
-        JSON.stringify({ success: false, errors: [{ message: 'Cloudflare API Token missing' }] }),
+        JSON.stringify({ 
+          success: false, 
+          errors: [{ message: 'Cloudflare API Token missing. Please add CLOUDFLARE_API_TOKEN in Cloudflare Pages Environment Secrets or in the app Settings.' }] 
+        }),
         { status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       );
     }
