@@ -16,7 +16,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install Dependencies
         run: npm ci
@@ -24,11 +24,16 @@ jobs:
       - name: Build Application
         run: npm run build
 
-      - name: Deploy to Cloudflare Pages
-        uses: cloudflare/pages-action@v1
+      - name: Deploy to Cloudflare Pages via Wrangler
+        if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: '39cd6e21a6317ad90e471a9b70a463af'
-          projectName: 'nimbus-deploy-platform'
-          directory: 'dist'
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          command: pages deploy dist --project-name=nimbus-deploy-platform --branch=main
+
+      - name: Secret Warning Check
+        if: ${{ secrets.CLOUDFLARE_API_TOKEN == '' }}
+        run: |
+          echo "::warning::CLOUDFLARE_API_TOKEN repository secret is not set in GitHub repository settings!"
+          echo "Please add CLOUDFLARE_API_TOKEN to https://github.com/arunkabish1/cloud-deploy-platform/settings/secrets/actions"
