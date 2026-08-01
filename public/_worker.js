@@ -2,7 +2,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // Always handle CORS preflight OPTIONS requests
+    // Handle CORS preflight OPTIONS requests
     if (request.method === 'OPTIONS') {
       return new Response(null, {
         status: 204,
@@ -14,24 +14,20 @@ export default {
       });
     }
 
-    // Handle any /api/ request
-    if (url.pathname.includes('/api/')) {
-      let body = {};
+    // 1. Cloudflare REST API Proxy (/api/cloudflare)
+    if (url.pathname.includes('cloudflare')) {
       try {
-        body = await request.json();
-      } catch (e) {
-        body = {};
-      }
+        const bodyText = await request.text();
+        let body = {};
+        try { body = JSON.parse(bodyText); } catch (e) {}
 
-      // 1. Cloudflare REST API Proxy (/api/cloudflare)
-      if (url.pathname.includes('/api/cloudflare')) {
         const { action, projectName, cfToken, accountId, dbName } = body;
         const targetAccountId = accountId || '39cd6e21a6317ad90e471a9b70a463af';
         const token = env.CLOUDFLARE_TOKEN || env.CLOUDFLARE_API_TOKEN || env.CF_API_KEY || cfToken;
 
         if (!token) {
           return new Response(
-            JSON.stringify({ success: false, errors: [{ message: 'Cloudflare API Token missing. Please set CLOUDFLARE_TOKEN in Cloudflare Pages Environment Secrets or in app Settings.' }] }),
+            JSON.stringify({ success: false, errors: [{ message: 'Cloudflare API Token missing' }] }),
             { status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
           );
         }
@@ -49,7 +45,7 @@ export default {
 
           const cfData = await cfRes.json();
           return new Response(JSON.stringify(cfData), {
-            status: cfRes.status,
+            status: 200,
             headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
           });
         }
@@ -66,26 +62,37 @@ export default {
 
           const cfData = await cfRes.json();
           return new Response(JSON.stringify(cfData), {
-            status: cfRes.status,
+            status: 200,
             headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
           });
         }
 
-        return new Response(JSON.stringify({ success: true, message: 'Cloudflare Proxy Active', pathname: url.pathname }), {
+        return new Response(JSON.stringify({ success: true, message: 'Cloudflare Proxy Active' }), {
           status: 200,
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
         });
+      } catch (err) {
+        return new Response(
+          JSON.stringify({ success: false, errors: [{ message: err.message }] }),
+          { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+        );
       }
+    }
 
-      // 2. GitHub REST API Proxy (/api/github)
-      if (url.pathname.includes('/api/github')) {
+    // 2. GitHub REST API Proxy (/api/github)
+    if (url.pathname.includes('github')) {
+      try {
+        const bodyText = await request.text();
+        let body = {};
+        try { body = JSON.parse(bodyText); } catch (e) {}
+
         const { action, repoName, githubToken, githubOwner } = body;
         const token = env.GH_PAT_TOKEN || env.GH_TOKEN || env.GH_ACCESS_TOKEN || githubToken;
         const owner = githubOwner || 'arunkabish1';
 
         if (!token) {
           return new Response(
-            JSON.stringify({ success: false, message: 'GitHub Token missing. Please set GH_PAT_TOKEN or GH_TOKEN in Cloudflare Pages Environment Secrets or in app Settings.' }),
+            JSON.stringify({ success: false, message: 'GitHub Token missing' }),
             { status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
           );
         }
@@ -121,10 +128,15 @@ export default {
           );
         }
 
-        return new Response(JSON.stringify({ success: true, message: 'GitHub Proxy Active', pathname: url.pathname }), {
+        return new Response(JSON.stringify({ success: true, message: 'GitHub Proxy Active' }), {
           status: 200,
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
         });
+      } catch (err) {
+        return new Response(
+          JSON.stringify({ success: false, message: err.message }),
+          { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+        );
       }
     }
 

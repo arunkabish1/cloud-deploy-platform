@@ -1,17 +1,26 @@
-async function testE2EText() {
-  console.log('Testing with Browser User-Agent header...');
-  const res = await fetch('https://nimbus-deploy-platform.pages.dev/api/github', {
+import https from 'https';
+
+function testPost() {
+  const data = JSON.stringify({ action: 'create_repo', repoName: 'test-app-99' });
+
+  const req = https.request('https://nimbus-deploy-platform.pages.dev/api/github', {
     method: 'POST',
-    headers: { 
+    headers: {
       'Content-Type': 'application/json',
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Content-Length': Buffer.byteLength(data),
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
     },
-    body: JSON.stringify({ action: 'create_repo', repoName: 'test-app-99' }),
+  }, (res) => {
+    console.log('HTTPS Status:', res.statusCode);
+    console.log('HTTPS Headers:', res.headers);
+    let body = '';
+    res.on('data', chunk => body += chunk);
+    res.on('end', () => console.log('HTTPS Body:', body));
   });
 
-  console.log('Status:', res.status);
-  const text = await res.text();
-  console.log('Raw Body:', text);
+  req.on('error', console.error);
+  req.write(data);
+  req.end();
 }
 
-testE2EText().catch(console.error);
+testPost();
