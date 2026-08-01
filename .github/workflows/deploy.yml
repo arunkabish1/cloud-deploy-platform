@@ -25,15 +25,10 @@ jobs:
         run: npm run build
 
       - name: Deploy to Cloudflare Pages via Wrangler
-        if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: '39cd6e21a6317ad90e471a9b70a463af'
           command: pages deploy dist --project-name=nimbus-deploy-platform --branch=main
-
-      - name: Secret Warning Check
-        if: ${{ secrets.CLOUDFLARE_API_TOKEN == '' }}
-        run: |
-          echo "::warning::CLOUDFLARE_API_TOKEN repository secret is not set in GitHub repository settings!"
-          echo "Please add CLOUDFLARE_API_TOKEN to https://github.com/arunkabish1/cloud-deploy-platform/settings/secrets/actions"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
