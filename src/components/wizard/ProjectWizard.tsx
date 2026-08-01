@@ -1,24 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { INITIAL_TEMPLATES } from '../../data/mockData';
 import { ProjectTemplate } from '../../types';
 import { generateOpenTofuHcl, InfrastructureSelection } from '../../services/opentofu';
+import { getApiConfig, setApiConfig } from '../../services/realCloudApi';
 import { 
   Zap, 
   CheckCircle2, 
   ArrowRight, 
   ArrowLeft, 
   Code2, 
-  Layers, 
   Rocket, 
-  ShieldCheck, 
-  Sparkles, 
-  Database, 
-  HardDrive, 
-  Server, 
-  Cpu, 
-  Globe,
-  Copy,
-  Check
+  Key, 
+  Copy, 
+  Check,
+  AlertCircle
 } from 'lucide-react';
 
 interface ProjectWizardProps {
@@ -34,6 +29,16 @@ export const ProjectWizard: React.FC<ProjectWizardProps> = ({
   const [projectName, setProjectName] = useState<string>('my-cloud-app');
   const [selectedTemplate, setSelectedTemplate] = useState<ProjectTemplate>(INITIAL_TEMPLATES[0]); // Cloudflare + Next.js + Tailwind default!
   
+  // API Tokens state
+  const [cfToken, setCfToken] = useState('');
+  const [ghToken, setGhToken] = useState('');
+
+  useEffect(() => {
+    const config = getApiConfig();
+    setCfToken(config.cloudflareToken);
+    setGhToken(config.githubToken);
+  }, []);
+
   // Infrastructure Matrix state
   const [infra, setInfra] = useState<InfrastructureSelection>({
     frontend: 'Cloudflare Pages',
@@ -55,6 +60,11 @@ export const ProjectWizard: React.FC<ProjectWizardProps> = ({
   };
 
   const handleFinish = () => {
+    // Save tokens if entered in wizard
+    setApiConfig({
+      cloudflareToken: cfToken,
+      githubToken: ghToken,
+    });
     onCompleteWizard(projectName, selectedTemplate, infra);
   };
 
@@ -112,10 +122,10 @@ export const ProjectWizard: React.FC<ProjectWizardProps> = ({
 
       {/* STEP 1: Project Details */}
       {currentStep === 1 && (
-        <div className="glass-panel p-8 rounded-2xl space-y-6 animate-fadeIn">
+        <div className="glass-panel p-8 rounded-2xl space-y-6">
           <div className="space-y-1">
             <h2 className="text-lg font-bold text-slate-100">Project & Repository Details</h2>
-            <p className="text-xs text-slate-400">Give your deployment a unique name and pick your target organization.</p>
+            <p className="text-xs text-slate-400">Give your deployment a unique name and target account.</p>
           </div>
 
           <div className="space-y-4 max-w-md">
@@ -131,20 +141,21 @@ export const ProjectWizard: React.FC<ProjectWizardProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">Organization</label>
-              <select className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-sm outline-none">
-                <option>Acme Cloud Corp (acme-corp)</option>
-                <option>Personal Workspace (arundev)</option>
-              </select>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">Target Cloudflare Account</label>
+              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-slate-300">
+                <span className="text-slate-500">Account ID: </span>
+                <span className="text-orange-400 font-bold">39cd6e21a6317ad90e471a9b70a463af</span>
+                <span className="text-slate-400 block text-[10px] mt-0.5">Arunkabish1@gmail.com's Account</span>
+              </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">GitHub Repository Creation</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">GitHub Repository Target</label>
               <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 flex items-center space-x-3">
                 <Code2 className="w-5 h-5 text-orange-400" />
                 <div>
-                  <p className="font-semibold text-slate-200">Auto-create GitHub repository</p>
-                  <p className="text-[11px] text-slate-400">github.com/acme-corp/{projectName || 'my-cloud-app'}</p>
+                  <p className="font-semibold text-slate-200">GitHub Repository URL</p>
+                  <p className="text-[11px] font-mono text-slate-400">github.com/arunkabish1/{projectName || 'my-cloud-app'}</p>
                 </div>
               </div>
             </div>
@@ -245,7 +256,6 @@ export const ProjectWizard: React.FC<ProjectWizardProps> = ({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Frontend */}
             <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
               <label className="block text-xs font-bold text-orange-400 uppercase tracking-wider">Frontend</label>
               <select
@@ -255,12 +265,9 @@ export const ProjectWizard: React.FC<ProjectWizardProps> = ({
               >
                 <option>Cloudflare Pages</option>
                 <option>AWS Amplify / S3 CDN</option>
-                <option>Vercel Edge</option>
-                <option>None (API Only)</option>
               </select>
             </div>
 
-            {/* Backend */}
             <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
               <label className="block text-xs font-bold text-orange-400 uppercase tracking-wider">Backend Engine</label>
               <select
@@ -270,11 +277,9 @@ export const ProjectWizard: React.FC<ProjectWizardProps> = ({
               >
                 <option>Cloudflare Workers</option>
                 <option>AWS ECS Fargate</option>
-                <option>None (Static Frontend)</option>
               </select>
             </div>
 
-            {/* Database */}
             <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
               <label className="block text-xs font-bold text-orange-400 uppercase tracking-wider">Database</label>
               <select
@@ -284,11 +289,9 @@ export const ProjectWizard: React.FC<ProjectWizardProps> = ({
               >
                 <option>Cloudflare D1 (SQLite Edge)</option>
                 <option>AWS RDS PostgreSQL</option>
-                <option>None</option>
               </select>
             </div>
 
-            {/* Storage */}
             <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
               <label className="block text-xs font-bold text-orange-400 uppercase tracking-wider">Storage</label>
               <select
@@ -298,35 +301,6 @@ export const ProjectWizard: React.FC<ProjectWizardProps> = ({
               >
                 <option>Cloudflare R2 Object Storage</option>
                 <option>AWS S3 Bucket</option>
-                <option>None</option>
-              </select>
-            </div>
-
-            {/* Cache */}
-            <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
-              <label className="block text-xs font-bold text-orange-400 uppercase tracking-wider">Cache Namespace</label>
-              <select
-                value={infra.cache}
-                onChange={e => setInfra({ ...infra, cache: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-200 outline-none"
-              >
-                <option>Cloudflare KV Store</option>
-                <option>AWS ElastiCache Redis</option>
-                <option>None</option>
-              </select>
-            </div>
-
-            {/* Queue */}
-            <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
-              <label className="block text-xs font-bold text-orange-400 uppercase tracking-wider">Message Queue</label>
-              <select
-                value={infra.queue}
-                onChange={e => setInfra({ ...infra, queue: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-200 outline-none"
-              >
-                <option>Cloudflare Queues</option>
-                <option>AWS SQS</option>
-                <option>None</option>
               </select>
             </div>
           </div>
@@ -395,34 +369,60 @@ export const ProjectWizard: React.FC<ProjectWizardProps> = ({
 
       {/* STEP 5: Deploy & Review */}
       {currentStep === 5 && (
-        <div className="glass-panel p-8 rounded-2xl space-y-6 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center mx-auto shadow-xl shadow-orange-500/30">
-            <Rocket className="w-8 h-8 text-white stroke-[2.5]" />
-          </div>
+        <div className="glass-panel p-8 rounded-2xl space-y-6">
+          <div className="text-center space-y-2">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center mx-auto shadow-xl shadow-orange-500/30">
+              <Rocket className="w-8 h-8 text-white stroke-[2.5]" />
+            </div>
 
-          <div className="max-w-md mx-auto space-y-2">
             <h2 className="text-xl font-bold text-slate-100">Ready to Deploy {projectName}!</h2>
-            <p className="text-xs text-slate-400">
-              Launching OpenTofu runner to provision Cloudflare Pages, Workers, D1 database, R2 bucket, and KV cache.
+            <p className="text-xs text-slate-400 max-w-md mx-auto">
+              Provisioning Cloudflare Pages, Workers, D1 database, and R2 bucket under Cloudflare Account 39cd6e21a6317ad90e471a9b70a463af.
             </p>
           </div>
 
-          <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-left text-xs font-mono max-w-md mx-auto space-y-2">
-            <div className="flex justify-between text-slate-400">
-              <span>Project Name:</span>
-              <span className="text-orange-400 font-bold">{projectName}</span>
+          {/* API Token Input Credentials Box */}
+          <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4 max-w-xl mx-auto text-xs">
+            <div className="flex items-center space-x-2 text-orange-400 font-bold">
+              <Key className="w-4 h-4" />
+              <span>Real Cloud API Authentication Credentials</span>
             </div>
-            <div className="flex justify-between text-slate-400">
-              <span>Template:</span>
-              <span className="text-slate-200">{selectedTemplate.title}</span>
-            </div>
-            <div className="flex justify-between text-slate-400">
-              <span>Target Provider:</span>
-              <span className="text-emerald-400 font-bold">Cloudflare Global Edge</span>
+
+            {(!cfToken || !ghToken) && (
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] flex items-start space-x-2">
+                <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <span>
+                  Please enter your Cloudflare API Token and GitHub Token below to execute live creation on Cloudflare (Account 39cd6e21a6317ad90e471a9b70a463af) and GitHub (arunkabish1).
+                </span>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <div>
+                <label className="block font-semibold text-slate-300 mb-1">Cloudflare API Token</label>
+                <input
+                  type="password"
+                  value={cfToken}
+                  onChange={e => setCfToken(e.target.value)}
+                  placeholder="Paste Cloudflare API Token..."
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-slate-200 outline-none focus:border-orange-500"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-300 mb-1">GitHub Personal Access Token (PAT)</label>
+                <input
+                  type="password"
+                  value={ghToken}
+                  onChange={e => setGhToken(e.target.value)}
+                  placeholder="ghp_..."
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-slate-200 outline-none focus:border-orange-500"
+                />
+              </div>
             </div>
           </div>
 
-          <div className="flex justify-center space-x-4 pt-4">
+          <div className="flex justify-center space-x-4 pt-2">
             <button
               onClick={() => setCurrentStep(4)}
               className="px-5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 text-xs font-semibold"
