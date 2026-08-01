@@ -1,5 +1,4 @@
 name = "cloud-deploy-platform"
-account_id = "39cd6e21a6317ad90e471a9b70a463af"
 pages_build_output_dir = "dist"
 compatibility_date = "2024-04-01"
 
