@@ -1,24 +1,20 @@
-export async function onRequest(context: any) {
-  if (context.request.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      },
-    });
-  }
+export async function onRequestOptions() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
+}
 
-  if (context.request.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
-  }
-
+export async function onRequestPost(context: any) {
   try {
     const body = await context.request.json();
     const { action, projectName, cfToken, accountId, dbName } = body;
 
     const targetAccountId = accountId || '39cd6e21a6317ad90e471a9b70a463af';
-    // Support CLOUDFLARE_TOKEN, CLOUDFLARE_API_TOKEN, CF_API_KEY, then client-passed token
     const token = context.env.CLOUDFLARE_TOKEN || 
                   context.env.CLOUDFLARE_API_TOKEN || 
                   context.env.CF_API_KEY || 
@@ -28,7 +24,7 @@ export async function onRequest(context: any) {
       return new Response(
         JSON.stringify({ 
           success: false, 
-          errors: [{ message: 'Cloudflare API Token missing. Please add CLOUDFLARE_TOKEN in Cloudflare Pages Environment Secrets or in the app Settings.' }] 
+          errors: [{ message: 'Cloudflare API Token missing. Please set CLOUDFLARE_TOKEN in Cloudflare Pages Environment Secrets or in app Settings.' }] 
         }),
         { status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       );

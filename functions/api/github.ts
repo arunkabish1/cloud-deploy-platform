@@ -1,24 +1,19 @@
-export async function onRequest(context: any) {
-  if (context.request.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      },
-    });
-  }
+export async function onRequestOptions() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
+}
 
-  if (context.request.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
-  }
-
+export async function onRequestPost(context: any) {
   try {
     const body = await context.request.json();
     const { action, repoName, githubToken, githubOwner } = body;
 
-    // Cloudflare Pages forbids 'GITHUB_' prefix in secret names.
-    // We check GH_PAT_TOKEN, GH_TOKEN, GH_ACCESS_TOKEN, then client-passed token.
     const token = context.env.GH_PAT_TOKEN || 
                   context.env.GH_TOKEN || 
                   context.env.GH_ACCESS_TOKEN || 
@@ -30,7 +25,7 @@ export async function onRequest(context: any) {
       return new Response(
         JSON.stringify({ 
           success: false, 
-          message: 'GitHub Token missing. Please add GH_PAT_TOKEN or GH_TOKEN in Cloudflare Pages Environment Secrets or in the app Settings.' 
+          message: 'GitHub Token missing. Please add GH_PAT_TOKEN or GH_TOKEN in Cloudflare Pages Environment Secrets or in app Settings.' 
         }),
         { status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       );
