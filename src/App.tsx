@@ -59,7 +59,8 @@ export const App: React.FC = () => {
           }
           return [updatedDep, ...prev];
         });
-      }
+      },
+      runnerMode
     );
     setActiveDeployment(newDep);
   };
