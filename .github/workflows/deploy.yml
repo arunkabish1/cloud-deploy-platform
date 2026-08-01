@@ -27,18 +27,16 @@ jobs:
       - name: Validate Cloudflare Secret Token
         run: |
           if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
-            echo "::error title=Missing Secret::CLOUDFLARE_API_TOKEN is not set in GitHub Secrets! Please add it at https://github.com/arunkabish1/cloud-deploy-platform/settings/secrets/actions"
+            echo "::error title=Missing Secret::CLOUDFLARE_API_TOKEN is not set in GitHub Secrets! Please add your Cloudflare API token at https://github.com/arunkabish1/cloud-deploy-platform/settings/secrets/actions"
             exit 1
           fi
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
-      - name: Deploy to Cloudflare Pages via Wrangler
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: '39cd6e21a6317ad90e471a9b70a463af'
-          command: pages deploy dist --project-name=nimbus-deploy-platform --branch=main
+      - name: Ensure Cloudflare Pages Project Exists & Deploy
+        run: |
+          npx wrangler pages project create nimbus-deploy-platform --production-branch=main || true
+          npx wrangler pages deploy dist --project-name=nimbus-deploy-platform --branch=main --commit-dirty=true
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: '39cd6e21a6317ad90e471a9b70a463af'
