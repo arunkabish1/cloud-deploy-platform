@@ -27,7 +27,7 @@ export interface RealExecutionResult {
   details?: any;
 }
 
-// 1. Create Real GitHub Repository via GitHub REST API
+// 1. Create Real GitHub Repository via Serverless Edge Function (/api/github)
 export async function createRealGitHubRepo(
   repoName: string,
   config: RealApiConfig
@@ -39,42 +39,32 @@ export async function createRealGitHubRepo(
     };
   }
 
+  const endpoint = `${window.location.origin}/api/github`;
+
   try {
-    const response = await fetch('https://api.github.com/user/repos', {
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
-        'Authorization': `token ${config.githubToken}`,
-        'Accept': 'application/vnd.github.v3+json',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        name: repoName,
-        description: `Deployed via Nimbus Orchestration Engine (${config.githubOwner}/${repoName})`,
-        private: false,
-        auto_init: true,
+        action: 'create_repo',
+        repoName: repoName,
+        githubToken: config.githubToken,
+        githubOwner: config.githubOwner,
       }),
     });
 
     const data = await response.json();
-
-    if (response.ok || response.status === 422) {
-      return {
-        success: true,
-        message: response.status === 422 
-          ? `Repository 'github.com/${config.githubOwner}/${repoName}' already exists.`
-          : `Created GitHub repository 'github.com/${config.githubOwner}/${repoName}'`,
-        details: data,
-      };
-    } else {
-      return {
-        success: false,
-        message: `GitHub API Error (${response.status}): ${data.message || 'Failed to create repo'}`,
-      };
-    }
+    return {
+      success: data.success,
+      message: data.message || `Processed GitHub repository '${repoName}'`,
+      details: data.details,
+    };
   } catch (err: any) {
     return {
       success: false,
-      message: `Network error connecting to GitHub API: ${err.message}`,
+      message: `GitHub Edge Proxy Error: ${err.message}`,
     };
   }
 }
