@@ -17,15 +17,20 @@ export async function onRequest(context: any) {
     const body = await context.request.json();
     const { action, repoName, githubToken, githubOwner } = body;
 
-    // Use server-side secret if available, fallback to client-passed token
-    const token = context.env.GITHUB_TOKEN || githubToken;
+    // Cloudflare Pages forbids 'GITHUB_' prefix in secret names.
+    // We check GH_PAT_TOKEN, GH_TOKEN, GH_ACCESS_TOKEN, then client-passed token.
+    const token = context.env.GH_PAT_TOKEN || 
+                  context.env.GH_TOKEN || 
+                  context.env.GH_ACCESS_TOKEN || 
+                  githubToken;
+                  
     const owner = githubOwner || 'arunkabish1';
 
     if (!token) {
       return new Response(
         JSON.stringify({ 
           success: false, 
-          message: 'GitHub Token missing. Please add GITHUB_TOKEN in Cloudflare Pages Environment Secrets or in the app Settings.' 
+          message: 'GitHub Token missing. Please add GH_PAT_TOKEN or GH_TOKEN in Cloudflare Pages Environment Secrets or in the app Settings.' 
         }),
         { status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       );

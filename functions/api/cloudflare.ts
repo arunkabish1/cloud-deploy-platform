@@ -18,14 +18,17 @@ export async function onRequest(context: any) {
     const { action, projectName, cfToken, accountId, dbName } = body;
 
     const targetAccountId = accountId || '39cd6e21a6317ad90e471a9b70a463af';
-    // Use server-side secret if available, fallback to client-passed token
-    const token = context.env.CLOUDFLARE_API_TOKEN || cfToken;
+    // Support CLOUDFLARE_TOKEN, CLOUDFLARE_API_TOKEN, CF_API_KEY, then client-passed token
+    const token = context.env.CLOUDFLARE_TOKEN || 
+                  context.env.CLOUDFLARE_API_TOKEN || 
+                  context.env.CF_API_KEY || 
+                  cfToken;
 
     if (!token) {
       return new Response(
         JSON.stringify({ 
           success: false, 
-          errors: [{ message: 'Cloudflare API Token missing. Please add CLOUDFLARE_API_TOKEN in Cloudflare Pages Environment Secrets or in the app Settings.' }] 
+          errors: [{ message: 'Cloudflare API Token missing. Please add CLOUDFLARE_TOKEN in Cloudflare Pages Environment Secrets or in the app Settings.' }] 
         }),
         { status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       );
