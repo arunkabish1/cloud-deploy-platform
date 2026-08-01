@@ -16,12 +16,14 @@ interface HeaderProps {
   onToggleRunnerMode: () => void;
   onNewProject: () => void;
   activeTab: string;
+  onTabChange?: (tab: string) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   runnerMode,
   onToggleRunnerMode,
   onNewProject,
+  onTabChange,
 }) => {
   return (
     <header className="h-16 border-b border-slate-800 bg-[#0d1322]/80 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-40">
@@ -87,7 +89,16 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Right Controls */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-3">
+        {/* Credentials Button */}
+        <button
+          onClick={() => onTabChange && onTabChange('credentials')}
+          className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-orange-400 hover:text-orange-300 text-xs font-semibold shadow-sm transition-all"
+        >
+          <Key className="w-3.5 h-3.5 text-orange-400" />
+          <span>Cloud Credentials</span>
+        </button>
+
         {/* Create Project Button */}
         <button
           onClick={onNewProject}

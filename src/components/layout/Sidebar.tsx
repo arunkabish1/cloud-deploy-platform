@@ -25,9 +25,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeProjectName,
 }) => {
   const menuItems = [
+    { id: 'credentials', label: '🔑 Cloud Credentials', icon: KeyRound, category: 'App', highlight: true },
     { id: 'overview', label: 'Project Overview', icon: LayoutDashboard, category: 'App' },
     { id: 'projects', label: 'All Projects', icon: FolderKanban, category: 'App' },
-    { id: 'wizard', label: 'Create Project Wizard', icon: PlusCircle, category: 'App', highlight: true },
+    { id: 'wizard', label: 'Create Project Wizard', icon: PlusCircle, category: 'App' },
     { id: 'deployments', label: 'Deployments & OpenTofu', icon: Rocket, category: 'Pipeline' },
     { id: 'infrastructure', label: 'Infrastructure Topology', icon: Network, category: 'Pipeline' },
     { id: 'logs', label: 'Live Logs Engine', icon: Terminal, category: 'Observability' },

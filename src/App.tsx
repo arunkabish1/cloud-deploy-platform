@@ -9,6 +9,7 @@ import { InfrastructureCanvas } from './components/infrastructure/Infrastructure
 import { EnvVarManager } from './components/env/EnvVarManager';
 import { DomainManager } from './components/domains/DomainManager';
 import { ProviderSettings } from './components/providers/ProviderSettings';
+import { ApiTokenManager } from './components/credentials/ApiTokenManager';
 
 import { 
   INITIAL_PROJECTS, 
@@ -25,7 +26,7 @@ import { FolderPlus, Rocket, Plus } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [runnerMode, setRunnerMode] = useState<'browser' | 'external'>('browser');
-  const [activeTab, setActiveTab] = useState<string>('overview');
+  const [activeTab, setActiveTab] = useState<string>('credentials'); // Open Credentials tab by default for clear setup!
 
   const [projects, setProjects] = useState<Project[]>(INITIAL_PROJECTS);
   const [activeProject, setActiveProject] = useState<Project | null>(INITIAL_PROJECTS[0] || null);
@@ -131,6 +132,7 @@ export const App: React.FC = () => {
         onToggleRunnerMode={handleToggleRunnerMode}
         onNewProject={() => setActiveTab('wizard')}
         activeTab={activeTab}
+        onTabChange={tab => setActiveTab(tab)}
       />
 
       <div className="flex-1 flex">
@@ -143,6 +145,8 @@ export const App: React.FC = () => {
 
         {/* Main Content Viewport */}
         <main className="flex-1 p-8 overflow-y-auto max-w-7xl">
+          {activeTab === 'credentials' && <ApiTokenManager />}
+
           {activeTab === 'overview' && (
             <ProjectOverview
               project={activeProject}
