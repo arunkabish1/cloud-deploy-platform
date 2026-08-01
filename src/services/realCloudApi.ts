@@ -7,17 +7,24 @@ export interface RealApiConfig {
 
 export const getApiConfig = (): RealApiConfig => {
   return {
-    cloudflareToken: localStorage.getItem('CLOUDFLARE_API_TOKEN') || '',
+    cloudflareToken: localStorage.getItem('CLOUDFLARE_TOKEN') || localStorage.getItem('CLOUDFLARE_API_TOKEN') || '',
     cloudflareAccountId: localStorage.getItem('CLOUDFLARE_ACCOUNT_ID') || '39cd6e21a6317ad90e471a9b70a463af',
-    githubToken: localStorage.getItem('GITHUB_TOKEN') || '',
+    githubToken: localStorage.getItem('GH_PAT_TOKEN') || localStorage.getItem('GH_TOKEN') || localStorage.getItem('GITHUB_TOKEN') || '',
     githubOwner: localStorage.getItem('GITHUB_OWNER') || 'arunkabish1',
   };
 };
 
 export const setApiConfig = (config: Partial<RealApiConfig>) => {
-  if (config.cloudflareToken !== undefined) localStorage.setItem('CLOUDFLARE_API_TOKEN', config.cloudflareToken);
+  if (config.cloudflareToken !== undefined) {
+    localStorage.setItem('CLOUDFLARE_TOKEN', config.cloudflareToken);
+    localStorage.setItem('CLOUDFLARE_API_TOKEN', config.cloudflareToken);
+  }
   if (config.cloudflareAccountId !== undefined) localStorage.setItem('CLOUDFLARE_ACCOUNT_ID', config.cloudflareAccountId);
-  if (config.githubToken !== undefined) localStorage.setItem('GITHUB_TOKEN', config.githubToken);
+  if (config.githubToken !== undefined) {
+    localStorage.setItem('GH_PAT_TOKEN', config.githubToken);
+    localStorage.setItem('GH_TOKEN', config.githubToken);
+    localStorage.setItem('GITHUB_TOKEN', config.githubToken);
+  }
   if (config.githubOwner !== undefined) localStorage.setItem('GITHUB_OWNER', config.githubOwner);
 };
 
@@ -27,7 +34,7 @@ export interface RealExecutionResult {
   details?: any;
 }
 
-// 1. Create Real GitHub Repository via Serverless Edge Function (/api/github)
+// 1. Create Real GitHub Repository via GitHub REST API
 export async function createRealGitHubRepo(
   repoName: string,
   config: RealApiConfig
@@ -39,37 +46,52 @@ export async function createRealGitHubRepo(
     };
   }
 
-  const endpoint = `${window.location.origin}/api/github`;
-
   try {
-    const response = await fetch(endpoint, {
+    const sanitizedName = repoName.toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+    const token = config.githubToken;
+    const authHeader = token.startsWith('ghp_') || token.startsWith('github_pat_') ? `Bearer ${token}` : `token ${token}`;
+
+    const response = await fetch('https://api.github.com/user/repos', {
       method: 'POST',
       headers: {
+        'Authorization': authHeader,
+        'Accept': 'application/vnd.github.v3+json',
         'Content-Type': 'application/json',
+        'User-Agent': 'Nimbus-Deploy-Platform/1.0',
       },
       body: JSON.stringify({
-        action: 'create_repo',
-        repoName: repoName,
-        githubToken: config.githubToken,
-        githubOwner: config.githubOwner,
+        name: sanitizedName,
+        description: `Deployed via Nimbus Orchestration Engine (${config.githubOwner}/${sanitizedName})`,
+        private: false,
+        auto_init: true,
       }),
     });
 
     const data = await response.json();
-    return {
-      success: data.success,
-      message: data.message || `Processed GitHub repository '${repoName}'`,
-      details: data.details,
-    };
+
+    if (response.ok || response.status === 422) {
+      return {
+        success: true,
+        message: response.status === 422 
+          ? `Repository 'github.com/${config.githubOwner}/${sanitizedName}' already exists.`
+          : `Created GitHub repository 'github.com/${config.githubOwner}/${sanitizedName}'`,
+        details: data,
+      };
+    } else {
+      return {
+        success: false,
+        message: `GitHub API Error (${response.status}): ${data.message || 'Failed to create repo'}`,
+      };
+    }
   } catch (err: any) {
     return {
       success: false,
-      message: `GitHub Edge Proxy Error: ${err.message}`,
+      message: `Network error connecting to GitHub API: ${err.message}`,
     };
   }
 }
 
-// 2. Create Real Cloudflare Pages Project via Serverless Edge Function (/api/cloudflare)
+// 2. Create Real Cloudflare Pages Project via Cloudflare REST API
 export async function createRealCloudflarePages(
   projectName: string,
   config: RealApiConfig
@@ -82,19 +104,18 @@ export async function createRealCloudflarePages(
   }
 
   const sanitizedName = projectName.toLowerCase().replace(/[^a-z0-9_-]/g, '-');
-  const endpoint = `${window.location.origin}/api/cloudflare`;
+  const url = `https://api.cloudflare.com/client/v4/accounts/${config.cloudflareAccountId}/pages/projects`;
 
   try {
-    const response = await fetch(endpoint, {
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${config.cloudflareToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        action: 'create_pages',
-        projectName: sanitizedName,
-        cfToken: config.cloudflareToken,
-        accountId: config.cloudflareAccountId,
+        name: sanitizedName,
+        production_branch: 'main',
       }),
     });
 
@@ -107,21 +128,21 @@ export async function createRealCloudflarePages(
         details: data,
       };
     } else {
-      const errMsg = data.errors ? data.errors.map((e: any) => e.message).join(', ') : (data.error || 'Failed to create Pages project');
+      const errMsg = data.errors ? data.errors.map((e: any) => e.message).join(', ') : 'Failed to create Pages project';
       return {
         success: false,
-        message: `Cloudflare API Response: ${errMsg}`,
+        message: `Cloudflare API Error: ${errMsg}`,
       };
     }
   } catch (err: any) {
     return {
       success: false,
-      message: `Cloudflare Edge Proxy Error: ${err.message}`,
+      message: `Network error connecting to Cloudflare API: ${err.message}`,
     };
   }
 }
 
-// 3. Create Real Cloudflare D1 Database via Serverless Edge Function (/api/cloudflare)
+// 3. Create Real Cloudflare D1 Database via Cloudflare REST API
 export async function createRealCloudflareD1(
   dbName: string,
   config: RealApiConfig
@@ -130,20 +151,16 @@ export async function createRealCloudflareD1(
     return { success: false, message: 'Cloudflare API Token not set.' };
   }
 
-  const endpoint = `${window.location.origin}/api/cloudflare`;
+  const url = `https://api.cloudflare.com/client/v4/accounts/${config.cloudflareAccountId}/d1/database`;
 
   try {
-    const response = await fetch(endpoint, {
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${config.cloudflareToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        action: 'create_d1',
-        dbName: dbName,
-        cfToken: config.cloudflareToken,
-        accountId: config.cloudflareAccountId,
-      }),
+      body: JSON.stringify({ name: dbName }),
     });
 
     const data = await response.json();

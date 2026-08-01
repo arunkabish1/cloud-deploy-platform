@@ -3,7 +3,7 @@ import https from 'https';
 function testPost() {
   const data = JSON.stringify({ action: 'create_repo', repoName: 'test-app-99' });
 
-  const req = https.request('https://nimbus-deploy-platform.pages.dev/api/github', {
+  const req = https.request('https://nimbus-deploy-platform.pages.dev/api/github/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
