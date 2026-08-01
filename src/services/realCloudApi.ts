@@ -57,7 +57,7 @@ export async function createRealGitHubRepo(
 
     const data = await response.json();
 
-    if (response.ok || response.status === 422) { // 422 means repo already exists
+    if (response.ok || response.status === 422) {
       return {
         success: true,
         message: response.status === 422 
@@ -79,7 +79,7 @@ export async function createRealGitHubRepo(
   }
 }
 
-// 2. Create Real Cloudflare Pages Project via Cloudflare REST API
+// 2. Create Real Cloudflare Pages Project via Cloudflare Pages Function Proxy (/api/cloudflare)
 export async function createRealCloudflarePages(
   projectName: string,
   config: RealApiConfig
@@ -92,18 +92,19 @@ export async function createRealCloudflarePages(
   }
 
   const sanitizedName = projectName.toLowerCase().replace(/[^a-z0-9_-]/g, '-');
-  const url = `https://api.cloudflare.com/client/v4/accounts/${config.cloudflareAccountId}/pages/projects`;
 
   try {
-    const response = await fetch(url, {
+    // Call serverless proxy endpoint to prevent CORS browser block
+    const response = await fetch('/api/cloudflare', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${config.cloudflareToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        name: sanitizedName,
-        production_branch: 'main',
+        action: 'create_pages',
+        projectName: sanitizedName,
+        cfToken: config.cloudflareToken,
+        accountId: config.cloudflareAccountId,
       }),
     });
 
@@ -116,7 +117,7 @@ export async function createRealCloudflarePages(
         details: data,
       };
     } else {
-      const errMsg = data.errors ? data.errors.map((e: any) => e.message).join(', ') : 'Failed to create project';
+      const errMsg = data.errors ? data.errors.map((e: any) => e.message).join(', ') : 'Failed to create Pages project';
       return {
         success: false,
         message: `Cloudflare API Error: ${errMsg}`,
@@ -125,12 +126,12 @@ export async function createRealCloudflarePages(
   } catch (err: any) {
     return {
       success: false,
-      message: `Network error connecting to Cloudflare API: ${err.message}`,
+      message: `Cloudflare Proxy Error: ${err.message}`,
     };
   }
 }
 
-// 3. Create Real Cloudflare D1 Database
+// 3. Create Real Cloudflare D1 Database via Cloudflare Pages Function Proxy (/api/cloudflare)
 export async function createRealCloudflareD1(
   dbName: string,
   config: RealApiConfig
@@ -139,16 +140,18 @@ export async function createRealCloudflareD1(
     return { success: false, message: 'Cloudflare API Token not set.' };
   }
 
-  const url = `https://api.cloudflare.com/client/v4/accounts/${config.cloudflareAccountId}/d1/database`;
-
   try {
-    const response = await fetch(url, {
+    const response = await fetch('/api/cloudflare', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${config.cloudflareToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ name: dbName }),
+      body: JSON.stringify({
+        action: 'create_d1',
+        dbName: dbName,
+        cfToken: config.cloudflareToken,
+        accountId: config.cloudflareAccountId,
+      }),
     });
 
     const data = await response.json();
