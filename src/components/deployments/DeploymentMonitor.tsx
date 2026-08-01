@@ -11,8 +11,9 @@ import {
   Copy, 
   Check,
   ExternalLink,
-  ChevronDown,
-  ChevronUp
+  Github,
+  Cloud,
+  Globe
 } from 'lucide-react';
 
 interface DeploymentMonitorProps {
@@ -24,9 +25,6 @@ export const DeploymentMonitor: React.FC<DeploymentMonitorProps> = ({
   deployment,
   onViewLogs,
 }) => {
-  const [showHcl, setShowHcl] = useState(false);
-  const [copiedHcl, setCopiedHcl] = useState(false);
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'SUCCESS':
@@ -52,6 +50,10 @@ export const DeploymentMonitor: React.FC<DeploymentMonitorProps> = ({
         );
     }
   };
+
+  const liveUrl = `https://${deployment.projectName.toLowerCase().replace(/[^a-z0-9_-]/g, '-')}.pages.dev`;
+  const githubRepoUrl = `https://github.com/arunkabish1/${deployment.projectName}`;
+  const cloudflareConsoleUrl = `https://dash.cloudflare.com/39cd6e21a6317ad90e471a9b70a463af/pages/view/${deployment.projectName}`;
 
   return (
     <div className="space-y-6">
@@ -88,6 +90,42 @@ export const DeploymentMonitor: React.FC<DeploymentMonitorProps> = ({
           </div>
         </div>
 
+        {/* Action Links Row (Live App, GitHub Repo, Cloudflare Console) */}
+        <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-800/80">
+          <a
+            href={liveUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center space-x-2 px-3.5 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/30 text-orange-400 hover:text-orange-300 text-xs font-mono font-semibold transition-all"
+          >
+            <Globe className="w-4 h-4 text-orange-400" />
+            <span>Open Live App ({liveUrl})</span>
+            <ExternalLink className="w-3 h-3 text-orange-400" />
+          </a>
+
+          <a
+            href={githubRepoUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center space-x-2 px-3.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white text-xs font-mono font-medium transition-all"
+          >
+            <Github className="w-4 h-4 text-slate-400" />
+            <span>GitHub Repository</span>
+            <ExternalLink className="w-3 h-3 text-slate-500" />
+          </a>
+
+          <a
+            href={cloudflareConsoleUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center space-x-2 px-3.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white text-xs font-mono font-medium transition-all"
+          >
+            <Cloud className="w-4 h-4 text-orange-400" />
+            <span>Cloudflare Console (39cd6e21a6317ad90e471a9b70a463af)</span>
+            <ExternalLink className="w-3 h-3 text-slate-500" />
+          </a>
+        </div>
+
         {/* Current Step Banner */}
         <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center space-x-3 text-xs font-mono">
           <Loader2 className="w-4 h-4 text-orange-400 animate-spin" />
@@ -96,7 +134,7 @@ export const DeploymentMonitor: React.FC<DeploymentMonitorProps> = ({
         </div>
       </div>
 
-      {/* Pipeline Steps Execution Timeline (Phase 8 Timeline) */}
+      {/* Pipeline Steps Execution Timeline */}
       <div className="glass-panel p-6 rounded-2xl space-y-4">
         <h2 className="text-sm font-semibold text-slate-200 flex items-center space-x-2">
           <Rocket className="w-4 h-4 text-orange-400" />
