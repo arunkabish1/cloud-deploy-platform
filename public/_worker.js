@@ -2,7 +2,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // Handle CORS preflight options
+    // Always handle CORS preflight
     if (request.method === 'OPTIONS') {
       return new Response(null, {
         status: 204,
@@ -14,8 +14,15 @@ export default {
       });
     }
 
-    // 1. Cloudflare REST API Endpoint (/api/cloudflare)
-    if (url.pathname === '/api/cloudflare' && request.method === 'POST') {
+    // Handle Cloudflare API Route (/api/cloudflare)
+    if (url.pathname.startsWith('/api/cloudflare')) {
+      if (request.method !== 'POST') {
+        return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+          status: 405,
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        });
+      }
+
       try {
         const body = await request.json();
         const { action, projectName, cfToken, accountId, dbName } = body;
@@ -63,6 +70,11 @@ export default {
             headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
           });
         }
+
+        return new Response(JSON.stringify({ error: 'Unknown action' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        });
       } catch (err) {
         return new Response(
           JSON.stringify({ success: false, errors: [{ message: err.message }] }),
@@ -71,8 +83,15 @@ export default {
       }
     }
 
-    // 2. GitHub REST API Endpoint (/api/github)
-    if (url.pathname === '/api/github' && request.method === 'POST') {
+    // Handle GitHub API Route (/api/github)
+    if (url.pathname.startsWith('/api/github')) {
+      if (request.method !== 'POST') {
+        return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+          status: 405,
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        });
+      }
+
       try {
         const body = await request.json();
         const { action, repoName, githubToken, githubOwner } = body;
@@ -116,6 +135,11 @@ export default {
             { status: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
           );
         }
+
+        return new Response(JSON.stringify({ error: 'Unknown action' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        });
       } catch (err) {
         return new Response(
           JSON.stringify({ success: false, message: err.message }),
