@@ -16,13 +16,6 @@ class DeploymentRunner {
     };
   }
 
-  private notify(deployment: Deployment) {
-    const set = this.listeners.get(deployment.id);
-    if (set) {
-      set.forEach(cb => cb(deployment));
-    }
-  }
-
   public async startDeployment(
     projectName: string,
     templateName: string,
@@ -69,12 +62,16 @@ class DeploymentRunner {
     onUpdate(currentDeployment);
 
     // Run async steps simulation
-    this.runPipeline(currentDeployment, onUpdate);
+    this.runPipeline(currentDeployment, projectName, onUpdate);
 
     return currentDeployment;
   }
 
-  private async runPipeline(deployment: Deployment, onUpdate: (dep: Deployment) => void) {
+  private async runPipeline(
+    deployment: Deployment,
+    projectName: string,
+    onUpdate: (dep: Deployment) => void
+  ) {
     const stepsConfig = [
       {
         stepIdx: 0,
