@@ -2,7 +2,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // Always handle CORS preflight
+    // Always handle CORS preflight OPTIONS requests
     if (request.method === 'OPTIONS') {
       return new Response(null, {
         status: 204,
@@ -14,17 +14,17 @@ export default {
       });
     }
 
-    // Handle Cloudflare API Route (/api/cloudflare)
-    if (url.pathname.startsWith('/api/cloudflare')) {
-      if (request.method !== 'POST') {
-        return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-          status: 405,
-          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-        });
+    // Handle any /api/ request
+    if (url.pathname.includes('/api/')) {
+      let body = {};
+      try {
+        body = await request.json();
+      } catch (e) {
+        body = {};
       }
 
-      try {
-        const body = await request.json();
+      // 1. Cloudflare REST API Proxy (/api/cloudflare)
+      if (url.pathname.includes('/api/cloudflare')) {
         const { action, projectName, cfToken, accountId, dbName } = body;
         const targetAccountId = accountId || '39cd6e21a6317ad90e471a9b70a463af';
         const token = env.CLOUDFLARE_TOKEN || env.CLOUDFLARE_API_TOKEN || env.CF_API_KEY || cfToken;
@@ -37,7 +37,7 @@ export default {
         }
 
         if (action === 'create_pages') {
-          const sanitizedName = projectName.toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+          const sanitizedName = (projectName || 'cloud-app').toLowerCase().replace(/[^a-z0-9_-]/g, '-');
           const cfRes = await fetch(`https://api.cloudflare.com/client/v4/accounts/${targetAccountId}/pages/projects`, {
             method: 'POST',
             headers: {
@@ -71,29 +71,14 @@ export default {
           });
         }
 
-        return new Response(JSON.stringify({ error: 'Unknown action' }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-        });
-      } catch (err) {
-        return new Response(
-          JSON.stringify({ success: false, errors: [{ message: err.message }] }),
-          { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
-        );
-      }
-    }
-
-    // Handle GitHub API Route (/api/github)
-    if (url.pathname.startsWith('/api/github')) {
-      if (request.method !== 'POST') {
-        return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-          status: 405,
+        return new Response(JSON.stringify({ success: true, message: 'Cloudflare Proxy Active', pathname: url.pathname }), {
+          status: 200,
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
         });
       }
 
-      try {
-        const body = await request.json();
+      // 2. GitHub REST API Proxy (/api/github)
+      if (url.pathname.includes('/api/github')) {
         const { action, repoName, githubToken, githubOwner } = body;
         const token = env.GH_PAT_TOKEN || env.GH_TOKEN || env.GH_ACCESS_TOKEN || githubToken;
         const owner = githubOwner || 'arunkabish1';
@@ -106,7 +91,7 @@ export default {
         }
 
         if (action === 'create_repo') {
-          const sanitizedName = repoName.toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+          const sanitizedName = (repoName || 'cloud-repo').toLowerCase().replace(/[^a-z0-9_-]/g, '-');
           const ghRes = await fetch('https://api.github.com/user/repos', {
             method: 'POST',
             headers: {
@@ -136,15 +121,10 @@ export default {
           );
         }
 
-        return new Response(JSON.stringify({ error: 'Unknown action' }), {
-          status: 400,
+        return new Response(JSON.stringify({ success: true, message: 'GitHub Proxy Active', pathname: url.pathname }), {
+          status: 200,
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
         });
-      } catch (err) {
-        return new Response(
-          JSON.stringify({ success: false, message: err.message }),
-          { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
-        );
       }
     }
 
